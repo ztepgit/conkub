@@ -39,7 +39,7 @@ export function Footer() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <Music2 className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-semibold tracking-tight">ConcertHub</span>
+              <span className="text-xl font-semibold tracking-tight">Conkub</span>
             </Link>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
               Your premier destination for discovering and booking live concert experiences
@@ -85,7 +85,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} ConcertHub. All rights reserved.
+            © {new Date().getFullYear()} Conkub. All rights reserved.
           </p>
           <div className="flex gap-6">
             <Link

@@ -27,7 +27,7 @@ export function WhyChooseUs() {
       <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            Why Choose ConcertHub
+            Why Choose Conkub
           </h2>
           <p className="mx-auto max-w-2xl text-muted-foreground">
             We make finding and booking your next concert experience simple, secure, and
