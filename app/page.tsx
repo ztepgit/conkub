@@ -1,3 +1,4 @@
+//app/page.tsx
 import { Navbar } from "@/components/navbar";
 import { HeroBanner } from "@/components/hero-banner";
 import { ConcertSearch } from "@/components/concert-search";

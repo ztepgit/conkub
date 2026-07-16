@@ -1,3 +1,4 @@
+// app/events/[id]/page.tsx
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Calendar, MapPin, Clock, Info } from "lucide-react";
