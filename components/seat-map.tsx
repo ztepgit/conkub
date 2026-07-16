@@ -45,13 +45,19 @@ export function SeatMap({ eventId }: SeatMapProps) {
   // เรียงลำดับแถว
   const rows = Object.keys(groupedSeats).sort();
 
-  const handleBook = () => {
+  // ฟังก์ชันใหม่: จัดการจองและ Redirect ไป Stripe
+  const handleProceedToPayment = () => {
     if (!selectedSeat) return;
+    
+    // ยิง API ไปที่ Go (ซึ่ง Go จะคืนค่า URL ของ Stripe กลับมาให้)
     book(
       { eventId, seatId: selectedSeat.id },
       {
-        onSuccess: () => {
-          setSelectedSeat(null);
+        onSuccess: (data: any) => {
+          // Redirect ผู้ใช้ไปยังหน้าต่างชำระเงินของ Stripe ของจริง!
+          if (data?.url) {
+             window.location.href = data.url; 
+          }
         },
       }
     );
@@ -166,12 +172,12 @@ export function SeatMap({ eventId }: SeatMapProps) {
             <Button
               className="w-full h-12 text-base font-semibold"
               disabled={!selectedSeat || isPending}
-              onClick={handleBook}
+              onClick={handleProceedToPayment} // เชื่อมต่อปุ่มกับฟังก์ชัน Redirect ไป Stripe
             >
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  กำลังล็อคที่นั่ง...
+                  กำลังดำเนินการ...
                 </>
               ) : (
                 "ยืนยันการจองที่นั่ง"
