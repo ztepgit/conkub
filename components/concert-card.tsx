@@ -1,4 +1,6 @@
+// components/concert-card.tsx
 import Image from "next/image";
+import Link from "next/link"; // 🔴 1. เพิ่ม import Link
 import { MapPin, Calendar, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -67,10 +69,13 @@ export function ConcertCard({ concert }: ConcertCardProps) {
             <p className="text-xs text-muted-foreground">Starting from</p>
             <p className="text-xl font-bold">${concert.price}</p>
           </div>
-          <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-            <Ticket className="h-4 w-4" />
-            Book Now
-          </Button>
+          {/* 🔴 2. ครอบปุ่มด้วย Link เพื่อพาไปหน้ารายละเอียดคอนเสิร์ต */}
+          <Link href={`/events/${concert.id}`}>
+            <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+              <Ticket className="h-4 w-4" />
+              Book Now
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
