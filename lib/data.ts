@@ -1,3 +1,4 @@
+//lib/data.ts
 export interface Concert {
   id: string;
   title: string;
@@ -21,7 +22,7 @@ export interface Category {
 export const concerts: Concert[] = [
   {
     id: "1",
-    title: "Summer Vibes Tour",
+    title: "Summer Tour",
     artist: "The Weeknd",
     venue: "Madison Square Garden, NYC",
     date: "Jul 15, 2026",
@@ -33,7 +34,7 @@ export const concerts: Concert[] = [
   },
   {
     id: "2",
-    title: "Rock Revolution",
+    title: "Rock Effect",
     artist: "Foo Fighters",
     venue: "Wembley Stadium, London",
     date: "Aug 22, 2026",
@@ -45,7 +46,7 @@ export const concerts: Concert[] = [
   },
   {
     id: "3",
-    title: "K-Pop Spectacular",
+    title: "K-Pop Come True",
     artist: "BTS",
     venue: "Seoul Olympic Stadium",
     date: "Sep 5, 2026",
@@ -57,7 +58,7 @@ export const concerts: Concert[] = [
   },
   {
     id: "4",
-    title: "Electric Dreams Festival",
+    title: "EDM Land",
     artist: "Various Artists",
     venue: "Coachella Valley, CA",
     date: "Oct 12, 2026",
@@ -81,7 +82,7 @@ export const concerts: Concert[] = [
   },
   {
     id: "6",
-    title: "Symphony Under the Stars",
+    title: "Symphony Night",
     artist: "London Philharmonic",
     venue: "Royal Albert Hall, London",
     date: "Dec 20, 2026",
