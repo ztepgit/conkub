@@ -1,12 +1,17 @@
 // hooks/use-api.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchEvents, fetchSeats, bookSeat } from "@/lib/api";
+import { fetchSeats, bookSeat } from "@/lib/api"; // 🔴 เอา fetchEvents ออก
 import { toast } from "sonner"; // สมมติว่าใช้ sonner ตาม package.json
 
 export function useEvents() {
   return useQuery({
     queryKey: ["events"],
-    queryFn: fetchEvents,
+    queryFn: async () => {
+      // 🔴 เปลี่ยนมายิง API จริงตามที่คุณต้องการ
+      const res = await fetch("http://localhost:8080/api/v1/events");
+      if (!res.ok) throw new Error("Failed to fetch events");
+      return res.json();
+    },
   });
 }
 

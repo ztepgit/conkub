@@ -1,9 +1,26 @@
-import { ArrowRight } from "lucide-react";
+// components/featured-concerts.tsx
+"use client"; // 🔴 1. เติม use client เพราะมีการใช้ hook (useEvents)
+
+import { ArrowRight, Loader2 } from "lucide-react"; // 🔴 เพิ่ม Loader2
 import { Button } from "@/components/ui/button";
 import { ConcertCard } from "./concert-card";
-import { concerts } from "@/lib/data";
+import { useEvents } from "@/hooks/use-api"; // 🔴 2. Import hook ดึงข้อมูล
 
 export function FeaturedConcerts() {
+  const { data: eventsResponse, isLoading } = useEvents();
+
+  // 🔴 3. เพิ่มสถานะตอนกำลังโหลดข้อมูล
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-20 min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // 🔴 4. รับค่าจาก Backend (รองรับทั้งแบบมี .data ครอบ และแบบส่ง Array มาตรงๆ)
+  const events = eventsResponse?.data || eventsResponse || [];
+
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
       <div className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -22,8 +39,23 @@ export function FeaturedConcerts() {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {concerts.map((concert) => (
-          <ConcertCard key={concert.id} concert={concert} />
+        {/* 🔴 5. เปลี่ยนจาก mock data (concerts) เป็นข้อมูลจาก API (events) พร้อมจัด Format */}
+        {events.map((event: any) => (
+          <ConcertCard
+            key={event.id}
+            concert={{
+              id: event.id,
+              title: event.name,
+              artist: event.artist,
+              date: new Date(event.show_time).toLocaleDateString('th-TH'),
+              time: new Date(event.show_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+              venue: event.venue,
+              image: event.image_url || "/placeholder.jpg",
+              category: event.category,
+              price: 2500, // อนาคตสามารถปรับไปดึงราคาต่ำสุดของงานจาก backend ได้
+              remainingTickets: event.remainingTickets
+            }}
+          />
         ))}
       </div>
     </section>
