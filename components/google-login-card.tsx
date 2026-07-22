@@ -1,3 +1,4 @@
+// components/google-login-card.tsx
 "use client";
 
 import { useState } from "react";
@@ -10,10 +11,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Mail, Loader2 } from "lucide-react"; // เพิ่ม Loader2
+import { Loader2 } from "lucide-react"; // ลบ Mail ออก
+import { toast } from "sonner"; // 🔴 1. Import toast
+
+// ลบ import Input, Label, Separator ออกเนื่องจากไม่ได้ใช้แล้ว
 
 interface GoogleLoginCardProps {
   open: boolean;
@@ -21,34 +22,32 @@ interface GoogleLoginCardProps {
 }
 
 export function GoogleLoginCard({ open, onOpenChange }: GoogleLoginCardProps) {
-  // 1. เพิ่ม Loading State ป้องกันการกดเบิ้ล
   const [isLoading, setIsLoading] = useState(false);
 
-  // 2. ฟังก์ชันจัดการ Google Login แบบ Production-ready
+  // 🔴 2. ย้าย Client มาไว้ตรงนี้ เพื่อให้ Reuse ได้และปลอดภัยกับ SSR
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
 
-      // สร้าง Client ภายในฟังก์ชัน หรือ Component เพื่อให้ปลอดภัยกับ SSR และดึง Env ล่าสุด
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          // ใช้ window.location.origin เพื่อรองรับ Vercel Preview Deployments อัตโนมัติโดยไม่ต้องฮาร์ดโค้ด
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
       if (error) throw error;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Google login error:", error);
-      // ตรงนี้หาก UI มี Toast (เช่น sonner) สามารถเรียก toast.error("Login failed") ได้เลย
+      // 🔴 3. เรียกใช้ Toast แจ้งเตือนผู้ใช้เมื่อเกิด Error
+      toast.error(error.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
     } finally {
-      setIsLoading(false); // ปลดโหลดในกรณีที่ error (ถ้าสำเร็จมันจะ redirect หน้าไปเลย)
+      setIsLoading(false);
     }
   };
 
@@ -61,9 +60,8 @@ export function GoogleLoginCard({ open, onOpenChange }: GoogleLoginCardProps) {
             Sign in to your account to continue booking tickets
           </DialogDescription>
         </DialogHeader>
+        
         <div className="space-y-4 py-4">
-
-          {/* 3. ผูก Event และ Loading State ที่ปุ่ม Google Login */}
           <Button
             variant="outline"
             className="w-full gap-3 py-6 text-base font-medium"
@@ -82,40 +80,6 @@ export function GoogleLoginCard({ open, onOpenChange }: GoogleLoginCardProps) {
             )}
             Continue with Google
           </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-            </div>
-          </div>
-
-          {/* Email Login Form (เว้นไว้ตามเดิม ไม่แก้) */}
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="email" type="email" placeholder="name@example.com" className="pl-10" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" />
-            </div>
-            <Button className="w-full bg-primary py-6 text-base font-medium text-primary-foreground hover:bg-primary/90">
-              Sign In
-            </Button>
-          </div>
-
-          <p className="text-center text-sm text-muted-foreground">
-            {"Don't have an account? "}
-            <button className="font-medium text-foreground underline-offset-4 hover:underline">
-              Sign up
-            </button>
-          </p>
         </div>
       </DialogContent>
     </Dialog>
