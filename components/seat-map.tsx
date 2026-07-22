@@ -1,40 +1,131 @@
+// components/seat-map.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSeats, useBookSeat } from "@/hooks/use-api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, Ticket, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { createClient } from "@supabase/supabase-js";
+import { GoogleLoginCard } from "@/components/google-login-card";
+
+// ประกาศ Supabase Client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 interface SeatMapProps {
   eventId: number;
 }
 
 export function SeatMap({ eventId }: SeatMapProps) {
-  const { data, isLoading, error } = useSeats(eventId);
-  const { mutate: book, isPending } = useBookSeat();
+  // 🔴 1. ใช้ isError ตามมาตรฐาน React Query และลบ fetchError ออก
+  const { data, isLoading, isError } = useSeats(eventId);
+  const bookSeatMutation = useBookSeat();
   const [selectedSeat, setSelectedSeat] = useState<any | null>(null);
 
+  // States สำหรับ Auth & UX
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(false);
+
+  // Auto-resume Booking หลัง Login กลับมา (ดักจับ Session)
+  useEffect(() => {
+    const checkPendingAndResume = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // ตรวจสอบว่าก่อน Login ได้เลือกที่นั่งค้างไว้หรือไม่
+        const pending = sessionStorage.getItem("pendingBooking");
+        if (pending) {
+          sessionStorage.removeItem("pendingBooking"); // เคลียร์ทิ้งทันที
+          const { eventId: pEventId, seatId: pSeatId } = JSON.parse(pending);
+          
+          setIsLoginDialogOpen(false); // ปิด Dialog
+          executeBooking(pEventId, pSeatId); // ดำเนินการต่ออัตโนมัติ
+        }
+      }
+    };
+
+    checkPendingAndResume();
+
+    // ฟังชั่นดักจับเมื่อ User สลับบัญชีหรือล็อกอินผ่าน Popup
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        checkPendingAndResume();
+      }
+    });
+
+    return () => authListener.subscription.unsubscribe();
+  }, []);
+
+  // ฟังก์ชันตรวจสอบก่อนจอง
+  const handleBookClick = async () => {
+    if (!selectedSeat) return toast.error("กรุณาเลือกที่นั่งก่อนทำรายการ");
+
+    setIsCheckingSession(true);
+    const { data: { session }, error } = await supabase.auth.getSession();
+    setIsCheckingSession(false);
+
+    if (error || !session) {
+      // กรณียังไม่ Login -> เก็บ State ไว้ใน sessionStorage เผื่อ OAuth Redirect
+      sessionStorage.setItem("pendingBooking", JSON.stringify({ eventId, seatId: selectedSeat.id }));
+      setIsLoginDialogOpen(true); // เปิด Dialog
+      return;
+    }
+
+    // กรณี Login แล้ว -> ยิง API เลย
+    executeBooking(eventId, selectedSeat.id);
+  };
+
+  // ฟังก์ชันยิง API จริง
+  const executeBooking = (eId: number, sId: number) => {
+    bookSeatMutation.mutate({ eventId: eId, seatId: sId }, {
+      onError: (err: any) => { 
+        if (err.message === "UNAUTHORIZED") {
+          // หาก Backend ปฏิเสธ (Token หมดอายุ)
+          sessionStorage.setItem("pendingBooking", JSON.stringify({ eventId: eId, seatId: sId }));
+          toast.error("เซสชั่นหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง");
+          setIsLoginDialogOpen(true);
+        } else {
+          toast.error(err.message);
+        }
+      }
+    });
+  };
+
+  // 🔴 2. Loading State (ใช้ UI ที่กำหนด)
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground animate-pulse">กำลังโหลดผังที่นั่ง...</p>
+      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+        <Loader2 className="mb-3 h-6 w-6 animate-spin" />
+        <p>Loading seat map...</p>
       </div>
     );
   }
 
-  if (error) {
+  // 🔴 3. Error State (ดักจับจาก isError ไม่พ่น Technical text)
+  if (isError) {
     return (
-      <div className="text-center py-20 text-destructive bg-destructive/10 rounded-lg">
-        <p>เกิดข้อผิดพลาดในการโหลดผังที่นั่ง กรุณาลองใหม่อีกครั้ง</p>
+      <div className="flex justify-center py-10 text-muted-foreground">
+        Unable to load seat map. Please try again later.
       </div>
     );
   }
 
-  const seats = data?.data || [];
+  const seats = data?.data || data || [];
   
+  // 🔴 4. Empty State (เมื่อ API ตอบกลับสำเร็จแต่ไม่มีข้อมูลที่นั่ง)
+  if (!seats || seats.length === 0) {
+    return (
+      <div className="flex justify-center py-10 text-muted-foreground">
+        No seats available.
+      </div>
+    );
+  }
+
   // จัดกลุ่มที่นั่งตามแถว (Row) เช่น A, B, C
   const groupedSeats = seats.reduce((acc: any, seat: any) => {
     if (!acc[seat.row]) acc[seat.row] = [];
@@ -44,24 +135,6 @@ export function SeatMap({ eventId }: SeatMapProps) {
 
   // เรียงลำดับแถว
   const rows = Object.keys(groupedSeats).sort();
-
-  // ฟังก์ชันใหม่: จัดการจองและ Redirect ไป Stripe
-  const handleProceedToPayment = () => {
-    if (!selectedSeat) return;
-    
-    // ยิง API ไปที่ Go (ซึ่ง Go จะคืนค่า URL ของ Stripe กลับมาให้)
-    book(
-      { eventId, seatId: selectedSeat.id },
-      {
-        onSuccess: (data: any) => {
-          // Redirect ผู้ใช้ไปยังหน้าต่างชำระเงินของ Stripe ของจริง!
-          if (data?.url) {
-             window.location.href = data.url; 
-          }
-        },
-      }
-    );
-  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
@@ -105,7 +178,7 @@ export function SeatMap({ eventId }: SeatMapProps) {
                       return (
                         <button
                           key={seat.id}
-                          disabled={isBooked || isPending}
+                          disabled={isBooked || bookSeatMutation.isPending || isCheckingSession}
                           onClick={() => setSelectedSeat(seat)}
                           className={cn(
                             "w-10 h-10 rounded-t-lg rounded-b-sm flex items-center justify-center text-xs font-medium transition-all duration-200",
@@ -171,10 +244,10 @@ export function SeatMap({ eventId }: SeatMapProps) {
           <CardFooter>
             <Button
               className="w-full h-12 text-base font-semibold"
-              disabled={!selectedSeat || isPending}
-              onClick={handleProceedToPayment} // เชื่อมต่อปุ่มกับฟังก์ชัน Redirect ไป Stripe
+              disabled={!selectedSeat || bookSeatMutation.isPending || isCheckingSession}
+              onClick={handleBookClick}
             >
-              {isPending ? (
+              {bookSeatMutation.isPending || isCheckingSession ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   กำลังดำเนินการ...
@@ -186,6 +259,24 @@ export function SeatMap({ eventId }: SeatMapProps) {
           </CardFooter>
         </Card>
       </div>
+
+      {/* Login Dialog */}
+      <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogTitle className="text-center text-xl font-bold">
+            เข้าสู่ระบบเพื่อดำเนินการต่อ
+          </DialogTitle>
+          
+          <div className="py-4">
+            <GoogleLoginCard open={isLoginDialogOpen} 
+              onOpenChange={setIsLoginDialogOpen} /> 
+          </div>
+          
+          <p className="text-center text-sm text-muted-foreground">
+            เมื่อเข้าสู่ระบบสำเร็จ ระบบจะทำการจองที่นั่งให้คุณโดยอัตโนมัติ
+          </p>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
