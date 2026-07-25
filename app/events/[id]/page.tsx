@@ -1,42 +1,65 @@
 // app/events/[id]/page.tsx
+"use client"; // 🔴 1. เปลี่ยนเป็น Client Component เพื่อใช้งาน React Query
+
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Calendar, MapPin, Clock, Info } from "lucide-react";
-import { SeatMap } from "@/components/seat-map"; // นำเข้า SeatMap ที่เราสร้างไว้
+import { Calendar, MapPin, Clock, Info, Loader2 } from "lucide-react"; // 🔴 เพิ่ม Loader2
+import { SeatMap } from "@/components/seat-map";
 
-// 🔴 1. เอา import date-fns ออกไปเลย เพราะเราใช้ String แล้ว
-
-// 🔴 2. นำเข้า Component ตัวจับสถานะจ่ายเงิน และ Suspense
 import { PaymentStatus } from "@/components/payment-status";
-import { Suspense } from "react";
+import { Suspense, use } from "react"; // 🔴 นำเข้า use สำหรับแกะค่า Promise ใน Client Component
+import { useEvent } from "@/hooks/use-api"; // 🔴 นำเข้า API Hook
 
 interface EventPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function EventDetailPage({ params }: EventPageProps) {
-  // ใน Next.js 15+ (App Router) params จะเป็น Promise 
-  const resolvedParams = await params;
+export default function EventDetailPage({ params }: EventPageProps) {
+  // ใน Next.js 15+ (App Router) ฝั่ง Client Component ให้ใช้ React.use() แกะค่า Promise
+  const resolvedParams = use(params);
   const eventId = Number(resolvedParams.id);
 
   if (isNaN(eventId)) {
     notFound();
   }
 
-  // 🔴 หมายเหตุ: ในโปรเจกต์จริง คุณจะต้องเรียก API เพื่อดึงรายละเอียดงาน 1 งาน
-  // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${eventId}`);
-  // const eventData = await res.json();
+  // 🔴 2. เลิกใช้ Mock Data และเรียก API จริงผ่าน Hook
+  const { data: eventDataResponse, isLoading, isError } = useEvent(eventId);
 
-  // 🟢 สำหรับตอนนี้ ผมจำลองข้อมูล (Mock Data) ให้เห็นโครงสร้าง UI ไปก่อน
-  const eventData = {
-    id: eventId,
-    name: "Conkub Music Festival 2026",
-    description: "เทศกาลดนตรีที่ยิ่งใหญ่ที่สุดแห่งปี รวบรวมศิลปินชั้นนำระดับประเทศไว้ในงานเดียว พร้อมโปรดักชั่นจัดเต็มแสงสีเสียงสุดอลังการที่คุณไม่ควรพลาด!",
-    venue: "Impact Arena, Muang Thong Thani",
-    showTimeText: "31 ธันวาคม 2026", // 🔴 ใช้ String
-    showTimeClock: "18:00 น.",       // 🔴 ใช้ String
-    imageUrl: "/placeholder.jpg", // ใช้รูป placeholder ที่มีในโปรเจกต์
-  };
+  // 🔴 3. Loading State
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-muted-foreground">
+        <Loader2 className="mb-3 h-8 w-8 animate-spin text-primary" />
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // 🔴 4. Error State
+  if (isError) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-muted-foreground">
+        Unable to load data.
+      </div>
+    );
+  }
+
+  const eventData = eventDataResponse?.data || eventDataResponse;
+
+  // 🔴 5. Empty State
+  if (!eventData) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-muted-foreground">
+        No concerts available.
+      </div>
+    );
+  }
+
+  // สร้าง String วันที่และเวลาเพื่อนำไปแสดงผลตรงๆ
+  const showDate = new Date(eventData.show_time);
+  const showTimeText = showDate.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+  const showTimeClock = showDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
 
   return (
     <main className="min-h-screen pb-20">
@@ -49,7 +72,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
       <section className="relative w-full h-[40vh] md:h-[50vh] bg-muted overflow-hidden">
         {/* รูปพื้นหลัง */}
         <Image
-          src={eventData.imageUrl}
+          src={eventData.image_url || "/placeholder.jpg"}
           alt={eventData.name}
           fill
           className="object-cover opacity-40 blur-sm mix-blend-overlay"
@@ -62,7 +85,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
           <div className="container mx-auto px-4 pb-12 lg:pb-16">
             <div className="max-w-3xl space-y-4 animate-in fade-in slide-in-from-bottom-6 duration-700">
               <span className="px-3 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full uppercase tracking-wider">
-                Live Concert
+                {eventData.category || "Live Concert"}
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
                 {eventData.name}
@@ -72,15 +95,15 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                 <div className="flex items-center gap-2 bg-secondary/50 px-3 py-1.5 rounded-md backdrop-blur-sm">
                   <Calendar className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium">
-                    {/* 🔴 3. ดึง String มาแสดงตรงๆ แทนการใช้ format() */}
-                    {eventData.showTimeText}
+                    {/* ดึง String มาแสดงตรงๆ แทนการใช้ format() */}
+                    {showTimeText}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 bg-secondary/50 px-3 py-1.5 rounded-md backdrop-blur-sm">
                   <Clock className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium">
-                    {/* 🔴 4. ดึง String มาแสดงตรงๆ แทนการใช้ format() */}
-                    {eventData.showTimeClock}
+                    {/* ดึง String มาแสดงตรงๆ แทนการใช้ format() */}
+                    {showTimeClock}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 bg-secondary/50 px-3 py-1.5 rounded-md backdrop-blur-sm">
@@ -102,7 +125,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
             <Info className="w-5 h-5 text-primary" />
             เกี่ยวกับงานนี้
           </h2>
-          <p className="text-muted-foreground leading-relaxed">
+          <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
             {eventData.description}
           </p>
         </div>
