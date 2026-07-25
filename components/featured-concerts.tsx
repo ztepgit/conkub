@@ -1,15 +1,15 @@
 // components/featured-concerts.tsx
-"use client"; // 🔴 1. เติม use client เพราะมีการใช้ hook (useEvents)
+"use client";
 
-import { ArrowRight, Loader2 } from "lucide-react"; // 🔴 เพิ่ม Loader2
+import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConcertCard } from "./concert-card";
-import { useEvents } from "@/hooks/use-api"; // 🔴 2. Import hook ดึงข้อมูล
+import { useEvents } from "@/hooks/use-api";
 
 export function FeaturedConcerts() {
-  const { data: eventsResponse, isLoading } = useEvents();
+  // 🔴 1. เพิ่ม isError มารับสถานะ (Axios จะ Trigger isError ให้อัตโนมัติเมื่อ Request พัง)
+  const { data: eventsResponse, isLoading, isError } = useEvents();
 
-  // 🔴 3. เพิ่มสถานะตอนกำลังโหลดข้อมูล
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-20 min-h-[400px]">
@@ -18,8 +18,26 @@ export function FeaturedConcerts() {
     );
   }
 
-  // 🔴 4. รับค่าจาก Backend (รองรับทั้งแบบมี .data ครอบ และแบบส่ง Array มาตรงๆ)
+  // 🔴 2. เพิ่ม Error State เพื่อจัดการกรณี Axios โยน Error กลับมา
+  if (isError) {
+    return (
+      <div className="flex justify-center items-center py-20 min-h-[400px] text-muted-foreground">
+        Unable to load data.
+      </div>
+    );
+  }
+
+  // รับค่าจาก Backend (รองรับทั้งแบบมี .data ครอบ และแบบส่ง Array มาตรงๆ)
   const events = eventsResponse?.data || eventsResponse || [];
+
+  // 🔴 3. เพิ่ม Empty State กรณีที่ API ตอบกลับสำเร็จแต่ไม่มีข้อมูล
+  if (!events || events.length === 0) {
+    return (
+      <div className="flex justify-center items-center py-20 min-h-[400px] text-muted-foreground">
+        No concerts available.
+      </div>
+    );
+  }
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
@@ -39,7 +57,6 @@ export function FeaturedConcerts() {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {/* 🔴 5. เปลี่ยนจาก mock data (concerts) เป็นข้อมูลจาก API (events) พร้อมจัด Format */}
         {events.map((event: any) => (
           <ConcertCard
             key={event.id}
