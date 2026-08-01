@@ -9,49 +9,81 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, Ticket, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase"; // 🔴 1. เปลี่ยนมาใช้ Supabase Client จากไฟล์กลาง
 import { GoogleLoginCard } from "@/components/google-login-card";
-
-// ประกาศ Supabase Client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 interface SeatMapProps {
   eventId: number;
 }
 
 export function SeatMap({ eventId }: SeatMapProps) {
-  // 🔴 1. ใช้ isError ตามมาตรฐาน React Query และลบ fetchError ออก
   const { data, isLoading, isError } = useSeats(eventId);
   const bookSeatMutation = useBookSeat();
   const [selectedSeat, setSelectedSeat] = useState<any | null>(null);
 
-  // States สำหรับ Auth & UX
+  // State ควบคุม Dialog สำหรับ GoogleLoginCard
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(false);
 
-  // Auto-resume Booking หลัง Login กลับมา (ดักจับ Session)
+  // ============================================================================
+  // 🔴 2. รับฟัง Event "auth:required" จาก Axios Interceptor เพื่อเปิด Dialog อัตโนมัติ
+  // ============================================================================
+  useEffect(() => {
+    const handler = () => {
+      setIsLoginDialogOpen(true);
+    };
+
+    window.addEventListener("auth:required", handler);
+    return () => {
+      window.removeEventListener("auth:required", handler);
+    };
+  }, []);
+
+  // ============================================================================
+  // 🔴 3. ตรวจสอบ Session ก่อนเรียก Protected API
+  // ============================================================================
+  const handleBookClick = async () => {
+    if (!selectedSeat) {
+      toast.error("กรุณาเลือกที่นั่งก่อนทำรายการ");
+      return;
+    }
+
+    setIsCheckingSession(true);
+    // เช็ค Session จาก Supabase ก่อนเสมอ
+    const { data: { session }, error } = await supabase.auth.getSession();
+    setIsCheckingSession(false);
+
+    // หากไม่มี Session ให้เปิด Dialog GoogleLoginCard แล้ว return ทันที
+    if (error || !session) {
+      sessionStorage.setItem(
+        "pendingBooking",
+        JSON.stringify({ eventId, seatId: selectedSeat.id })
+      );
+      setIsLoginDialogOpen(true);
+      return; // 🔴 return ทันที ห้ามเรียก mutate() / ห้ามยิง POST /bookings
+    }
+
+    // หากเข้าสู่ระบบแล้ว จึงจะเรียก Protected API
+    bookSeatMutation.mutate({ eventId, seatId: selectedSeat.id });
+  };
+
+  // Auto-resume Booking หลังล็อกอินสำเร็จกลับมา (คง Business Logic เดิม)
   useEffect(() => {
     const checkPendingAndResume = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
       if (session) {
-        // ตรวจสอบว่าก่อน Login ได้เลือกที่นั่งค้างไว้หรือไม่
         const pending = sessionStorage.getItem("pendingBooking");
         if (pending) {
-          sessionStorage.removeItem("pendingBooking"); // เคลียร์ทิ้งทันที
+          sessionStorage.removeItem("pendingBooking");
           const { eventId: pEventId, seatId: pSeatId } = JSON.parse(pending);
-          
-          setIsLoginDialogOpen(false); // ปิด Dialog
-          executeBooking(pEventId, pSeatId); // ดำเนินการต่ออัตโนมัติ
+          setIsLoginDialogOpen(false);
+          bookSeatMutation.mutate({ eventId: pEventId, seatId: pSeatId });
         }
       }
     };
 
     checkPendingAndResume();
 
-    // ฟังชั่นดักจับเมื่อ User สลับบัญชีหรือล็อกอินผ่าน Popup
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
         checkPendingAndResume();
@@ -61,42 +93,7 @@ export function SeatMap({ eventId }: SeatMapProps) {
     return () => authListener.subscription.unsubscribe();
   }, []);
 
-  // ฟังก์ชันตรวจสอบก่อนจอง
-  const handleBookClick = async () => {
-    if (!selectedSeat) return toast.error("กรุณาเลือกที่นั่งก่อนทำรายการ");
-
-    setIsCheckingSession(true);
-    const { data: { session }, error } = await supabase.auth.getSession();
-    setIsCheckingSession(false);
-
-    if (error || !session) {
-      // กรณียังไม่ Login -> เก็บ State ไว้ใน sessionStorage เผื่อ OAuth Redirect
-      sessionStorage.setItem("pendingBooking", JSON.stringify({ eventId, seatId: selectedSeat.id }));
-      setIsLoginDialogOpen(true); // เปิด Dialog
-      return;
-    }
-
-    // กรณี Login แล้ว -> ยิง API เลย
-    executeBooking(eventId, selectedSeat.id);
-  };
-
-  // ฟังก์ชันยิง API จริง
-  const executeBooking = (eId: number, sId: number) => {
-    bookSeatMutation.mutate({ eventId: eId, seatId: sId }, {
-      onError: (err: any) => { 
-        if (err.message === "UNAUTHORIZED") {
-          // หาก Backend ปฏิเสธ (Token หมดอายุ)
-          sessionStorage.setItem("pendingBooking", JSON.stringify({ eventId: eId, seatId: sId }));
-          toast.error("เซสชั่นหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง");
-          setIsLoginDialogOpen(true);
-        } else {
-          toast.error(err.message);
-        }
-      }
-    });
-  };
-
-  // 🔴 2. Loading State (ใช้ UI ที่กำหนด)
+  // 🔴 4. Loading State
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -106,7 +103,7 @@ export function SeatMap({ eventId }: SeatMapProps) {
     );
   }
 
-  // 🔴 3. Error State (ดักจับจาก isError ไม่พ่น Technical text)
+  // 🔴 5. Error State
   if (isError) {
     return (
       <div className="flex justify-center py-10 text-muted-foreground">
@@ -116,8 +113,8 @@ export function SeatMap({ eventId }: SeatMapProps) {
   }
 
   const seats = data?.data || data || [];
-  
-  // 🔴 4. Empty State (เมื่อ API ตอบกลับสำเร็จแต่ไม่มีข้อมูลที่นั่ง)
+
+  // 🔴 6. Empty State
   if (!seats || seats.length === 0) {
     return (
       <div className="flex justify-center py-10 text-muted-foreground">
@@ -133,14 +130,12 @@ export function SeatMap({ eventId }: SeatMapProps) {
     return acc;
   }, {});
 
-  // เรียงลำดับแถว
   const rows = Object.keys(groupedSeats).sort();
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
       {/* ฝั่งซ้าย: ผังที่นั่ง */}
       <div className="flex-1 space-y-10 border rounded-2xl p-6 lg:p-10 bg-card/50">
-        
         {/* หน้าเวที */}
         <div className="relative w-full max-w-2xl mx-auto h-24 bg-gradient-to-b from-primary/20 to-transparent rounded-t-[100px] flex items-center justify-center border-t-4 border-primary shadow-[0_-10px_40px_rgba(var(--primary),0.2)]">
           <span className="text-lg font-bold tracking-widest text-primary/80 uppercase">Stage</span>
@@ -212,7 +207,7 @@ export function SeatMap({ eventId }: SeatMapProps) {
             </CardTitle>
             <CardDescription>เลือกที่นั่งที่ต้องการเพื่อดำเนินการต่อ</CardDescription>
           </CardHeader>
-          
+
           <CardContent>
             {selectedSeat ? (
               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
@@ -260,18 +255,17 @@ export function SeatMap({ eventId }: SeatMapProps) {
         </Card>
       </div>
 
-      {/* Login Dialog */}
+      {/* GoogleLoginCard Modal */}
       <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogTitle className="text-center text-xl font-bold">
             เข้าสู่ระบบเพื่อดำเนินการต่อ
           </DialogTitle>
-          
+
           <div className="py-4">
-            <GoogleLoginCard open={isLoginDialogOpen} 
-              onOpenChange={setIsLoginDialogOpen} /> 
+            <GoogleLoginCard open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen} />
           </div>
-          
+
           <p className="text-center text-sm text-muted-foreground">
             เมื่อเข้าสู่ระบบสำเร็จ ระบบจะทำการจองที่นั่งให้คุณโดยอัตโนมัติ
           </p>

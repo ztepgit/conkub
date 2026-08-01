@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { getEvents, getEventById, getSeats, bookSeat } from "@/lib/api";
 
 // ==========================================
-// 🟢 PUBLIC API
+// 🟢 PUBLIC API (ไม่ต้องใช้ Token)
 // ==========================================
 export function useEvents() {
   return useQuery({
@@ -30,13 +30,12 @@ export function useSeats(eventId: number) {
 }
 
 // ==========================================
-// 🔴 PROTECTED API
+// 🔴 PROTECTED API (ต้องใช้ Token)
 // ==========================================
 export function useBookSeat() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    // ไม่ต้องดึง Session หรือตรวจสอบ Error เองแล้ว Interceptor ใน lib/api.ts จัดการให้ทั้งหมด
     mutationFn: async ({ eventId, seatId }: { eventId: number; seatId: number }) => {
       return await bookSeat(eventId, seatId);
     },
@@ -50,6 +49,7 @@ export function useBookSeat() {
         window.location.href = data.url;
       }
     },
-    // หมายเหตุ: onError สำหรับเคสอื่นๆ และ UNAUTHORIZED ถูกส่งไปจัดการต่อที่ Component (UI) ผ่าน Interceptor แล้ว
+    // 🔴 โยน Error ตามปกติโดยไม่ต้องใส่ onError หรือเปิด Dialog จาก Hook นี้
+    // เพราะ Axios Response Interceptor ใน lib/api.ts จะเป็นผู้จัดการ 401 Unauthorized และยิง Event "auth:required" ให้อัตโนมัติ
   });
 }
