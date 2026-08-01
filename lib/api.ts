@@ -1,12 +1,6 @@
 // lib/api.ts
 import axios from "axios";
-import { createBrowserClient } from "@supabase/ssr";
-
-// สร้าง Supabase Client (ใช้จาก V1 เพราะรองรับ Next.js Client Component ได้ดีกว่า)
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/lib/supabase"; // 🔴 1. Import Supabase Client จากไฟล์ศูนย์กลาง
 
 // 1. สร้าง Axios Instance
 const api = axios.create({
@@ -32,12 +26,20 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 3. Response Interceptor (จัดการ Error กลาง)
+// 3. Response Interceptor (จัดการ Error กลาง และ 401 Unauthorized)
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // โยน Error กลับไปให้ UI (Component) จัดการ ห้ามมี UI Logic ตรงนี้
+  async (error) => {
+    // 🔴 2. เมื่อ Token หมดอายุ หรือไม่ได้รับอนุญาต (401)
     if (error.response?.status === 401) {
+      // ล้าง Session เก่าที่หมดอายุออก
+      await supabase.auth.signOut();
+      
+      // Dispatch Event เพื่อให้ UI เปิด Google Login Dialog อัตโนมัติ (ไม่ Redirect/Reload)
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("auth:required"));
+      }
+
       return Promise.reject(new Error("UNAUTHORIZED"));
     }
     
@@ -67,7 +69,7 @@ export const getSeats = async (eventId: number) => {
 };
 
 export const bookSeat = async (eventId: number, seatId: number) => {
-  // คงรูปแบบ key เป็น event_id และ seat_id ตาม V1 เผื่อ Backend Go รับค่าเป็น snake_case
+  // คงรูปแบบ key เป็น event_id และ seat_id เผื่อ Backend Go รับค่าเป็น snake_case
   const response = await api.post("/bookings", { 
     event_id: eventId, 
     seat_id: seatId 
