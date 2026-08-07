@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { useSeats, useBookSeat } from "@/hooks/use-api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, Ticket, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -180,8 +179,8 @@ export function SeatMap({ eventId }: SeatMapProps) {
                             isBooked
                               ? "bg-muted text-muted-foreground/30 cursor-not-allowed"
                               : isSelected
-                              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110 -translate-y-1"
-                              : "bg-secondary hover:bg-primary/20 hover:text-primary border hover:border-primary/50"
+                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110 -translate-y-1"
+                                : "bg-secondary hover:bg-primary/20 hover:text-primary border hover:border-primary/50"
                           )}
                           title={isBooked ? "จองแล้ว" : `แถว ${seat.row} เลขที่ ${seat.number} - ฿${seat.price}`}
                         >
@@ -255,22 +254,11 @@ export function SeatMap({ eventId }: SeatMapProps) {
         </Card>
       </div>
 
-      {/* GoogleLoginCard Modal */}
-      <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle className="text-center text-xl font-bold">
-            เข้าสู่ระบบเพื่อดำเนินการต่อ
-          </DialogTitle>
-
-          <div className="py-4">
-            <GoogleLoginCard open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen} />
-          </div>
-
-          <p className="text-center text-sm text-muted-foreground">
-            เมื่อเข้าสู่ระบบสำเร็จ ระบบจะทำการจองที่นั่งให้คุณโดยอัตโนมัติ
-          </p>
-        </DialogContent>
-      </Dialog>
+      {/* GoogleLoginCard Modal (มี Dialog ในตัวแล้ว เรียกใช้โดยตรง) */}
+      <GoogleLoginCard
+        open={isLoginDialogOpen}
+        onOpenChange={setIsLoginDialogOpen}
+      />
     </div>
   );
 }
