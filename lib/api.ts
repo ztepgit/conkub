@@ -16,7 +16,12 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     const { data: { session } } = await supabase.auth.getSession();
-    
+    console.log("🔐 API Request Auth:", {
+      url: config.url,
+      hasSession: !!session,
+      hasToken: !!session?.access_token,
+    });
+
     // ถ้ามี session ให้แนบ Bearer Token
     if (session?.access_token) {
       config.headers.Authorization = `Bearer ${session.access_token}`;
@@ -32,17 +37,24 @@ api.interceptors.response.use(
   async (error) => {
     // 🔴 2. เมื่อ Token หมดอายุ หรือไม่ได้รับอนุญาต (401)
     if (error.response?.status === 401) {
+      console.error("🔴 API 401 Unauthorized", {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        response: error.response?.data,
+      });
       // ล้าง Session เก่าที่หมดอายุออก
       await supabase.auth.signOut();
-      
+
       // Dispatch Event เพื่อให้ UI เปิด Google Login Dialog อัตโนมัติ (ไม่ Redirect/Reload)
       if (typeof window !== "undefined") {
+        console.warn("🔴 Dispatching auth:required");
         window.dispatchEvent(new CustomEvent("auth:required"));
       }
 
       return Promise.reject(new Error("UNAUTHORIZED"));
     }
-    
+
     // จัดรูปแบบ Error ให้ตรงกับที่ Backend ส่งมา
     const errorMessage = error.response?.data?.error || error.message || "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์";
     return Promise.reject(new Error(errorMessage));
@@ -70,9 +82,9 @@ export const getSeats = async (eventId: number) => {
 
 export const bookSeat = async (eventId: number, seatId: number) => {
   // คงรูปแบบ key เป็น event_id และ seat_id เผื่อ Backend Go รับค่าเป็น snake_case
-  const response = await api.post("/bookings", { 
-    event_id: eventId, 
-    seat_id: seatId 
+  const response = await api.post("/bookings", {
+    event_id: eventId,
+    seat_id: seatId
   });
   return response.data;
 };
