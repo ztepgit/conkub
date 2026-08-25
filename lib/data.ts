@@ -6,7 +6,7 @@ export interface Concert {
   venue: string;
   date: string;
   time: string;
-  price: number;
+  price?: number;
   image: string;
   remainingTickets: number;
   category: string;

@@ -69,7 +69,7 @@ export function FeaturedConcerts() {
               venue: event.venue,
               image: event.image_url || "/placeholder.jpg",
               category: event.category,
-              price: 2500, // อนาคตสามารถปรับไปดึงราคาต่ำสุดของงานจาก backend ได้
+              // 🔴 ลบ price: 2500 ทิ้งแล้ว เพื่อไม่ให้หน้าบ้าน Hardcode ตัวเลขเอง
               remainingTickets: event.remainingTickets
             }}
           />
