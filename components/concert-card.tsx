@@ -25,7 +25,7 @@ export function ConcertCard({ concert }: ConcertCardProps) {
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        
+
         {/* Category Badge */}
         <Badge
           variant="secondary"
@@ -67,7 +67,7 @@ export function ConcertCard({ concert }: ConcertCardProps) {
         <div className="flex items-center justify-between border-t border-border pt-4">
           <div>
             <p className="text-xs text-muted-foreground">Starting from</p>
-            <p className="text-xl font-bold">${concert.price}</p>
+            <p className="text-xl font-bold">฿{concert.price}</p>
           </div>
           {/* 🔴 2. ครอบปุ่มด้วย Link เพื่อพาไปหน้ารายละเอียดคอนเสิร์ต */}
           <Link href={`/events/${concert.id}`}>
