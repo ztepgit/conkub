@@ -86,5 +86,7 @@ export const bookSeat = async (eventId: number, seatId: number) => {
     event_id: eventId,
     seat_id: seatId
   });
+  // 🔴 [C] ตรวจสอบว่า Axios ได้รับ URL แบบสมบูรณ์หรือไม่
+  console.log("[Stripe] bookSeat response:", response.data);
   return response.data;
 };
