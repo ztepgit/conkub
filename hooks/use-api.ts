@@ -40,13 +40,21 @@ export function useBookSeat() {
       return await bookSeat(eventId, seatId);
     },
     onSuccess: (data, variables) => {
+      // 🔴 [D] ตรวจสอบว่า React Mutation รับข้อมูลได้สมบูรณ์หรือไม่
+      console.log("[Stripe] mutation success data:", data);
+      console.log("[Stripe] checkout URL:", data?.url);
+
       // เมื่อจองสำเร็จ ให้สั่ง Invalidate เพื่อรีเฟรชข้อมูลที่นั่งใหม่ทันที (เปลี่ยนที่นั่งเป็น BOOKED)
       queryClient.invalidateQueries({ queryKey: ["seats", variables.eventId] });
       toast.success("กำลังพาท่านเข้าสู่ระบบชำระเงิน...");
       
-      // ถ้า Backend คืน url ของ Stripe กลับมา ให้ Redirect ไปจ่ายเงิน
-      if (data.url) {
+      // 🔴 [E] ตรวจสอบคำสั่ง Redirect ขั้นตอนสุดท้าย
+      if (data?.url) {
+        console.log("[Stripe] Redirecting to:", data.url);
         window.location.href = data.url;
+      } else {
+        console.error("[Stripe] Checkout URL missing:", data);
+        toast.error("ไม่พบ Stripe Checkout URL");
       }
     },
     // 🔴 โยน Error ตามปกติโดยไม่ต้องใส่ onError หรือเปิด Dialog จาก Hook นี้
