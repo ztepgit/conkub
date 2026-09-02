@@ -81,12 +81,11 @@ export const getSeats = async (eventId: number) => {
 };
 
 export const bookSeat = async (eventId: number, seatId: number) => {
-  // คงรูปแบบ key เป็น event_id และ seat_id เผื่อ Backend Go รับค่าเป็น snake_case
-  const response = await api.post("/bookings", {
-    event_id: eventId,
-    seat_id: seatId
-  });
-  // 🔴 [C] ตรวจสอบว่า Axios ได้รับ URL แบบสมบูรณ์หรือไม่
-  console.log("[Stripe] bookSeat response:", response.data);
-  return response.data;
+  const response = await api.post('/bookings', { event_id: eventId, seat_id: seatId });
+  
+  // 🔴 เช็คอย่างรัดกุม: หากถูกแกะ data มาแล้วให้ใช้ response ได้เลย
+  const responseData = response.data !== undefined ? response.data : response;
+  
+  console.log("[Stripe] bookSeat parsed data:", responseData);
+  return responseData;
 };
