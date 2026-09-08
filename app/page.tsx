@@ -15,8 +15,8 @@ export default function Home() {
       <main>
         <HeroBanner />
         <ConcertSearch />
-        <CategoryGrid />
         <FeaturedConcerts />
+        <CategoryGrid />
         <WhyChooseUs />
         <Newsletter />
       </main>

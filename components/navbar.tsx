@@ -78,7 +78,7 @@ export function Navbar() {
               /* 🔴 2. Logged In State */
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2 font-medium">
+                  <Button variant="outline" className="gap-2 font-medium cursor-pointer">
                     <UserIcon className="h-4 w-4 text-primary" />
                     <span className="max-w-[150px] truncate">{displayName}</span>
                   </Button>
@@ -102,7 +102,7 @@ export function Navbar() {
               /* 🔴 3. Login State (ยังไม่ได้ล็อกอิน) */
               <Button
                 variant="outline"
-                className="gap-2 text-sm font-medium"
+                className="gap-2 text-sm font-medium cursor-pointer"
                 onClick={() => setShowLoginCard(true)}
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -132,7 +132,7 @@ export function Navbar() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden cursor-pointer"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -167,7 +167,7 @@ export function Navbar() {
                     </div>
                     <Button
                       variant="ghost"
-                      className="justify-start gap-2 text-destructive hover:text-destructive"
+                      className="justify-start gap-2 text-destructive hover:text-destructive cursor-pointer"
                       onClick={() => {
                         setMobileMenuOpen(false);
                         handleSignOut();
@@ -180,7 +180,7 @@ export function Navbar() {
                 ) : (
                   <Button
                     variant="outline"
-                    className="justify-start gap-2"
+                    className="justify-start gap-2 cursor-pointer"
                     onClick={() => {
                       setMobileMenuOpen(false);
                       setShowLoginCard(true);
