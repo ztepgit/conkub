@@ -1,43 +1,25 @@
 // components/featured-concerts.tsx
 "use client";
 
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ConcertCard } from "./concert-card";
 import { useEvents } from "@/hooks/use-api";
 
 export function FeaturedConcerts() {
-  // 🔴 1. เพิ่ม isError มารับสถานะ (Axios จะ Trigger isError ให้อัตโนมัติเมื่อ Request พัง)
-  const { data: eventsResponse, isLoading, isError } = useEvents();
+  const searchParams = useSearchParams();
+  
+  // แกะค่าที่ถูกกรอกไว้บน URL เพื่อนำไปดึง Data
+  const filters = {
+    search: searchParams.get("search") || undefined,
+    location: searchParams.get("location") || undefined,
+    date: searchParams.get("date") || undefined,
+  };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-20 min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // 🔴 2. เพิ่ม Error State เพื่อจัดการกรณี Axios โยน Error กลับมา
-  if (isError) {
-    return (
-      <div className="flex justify-center items-center py-20 min-h-[400px] text-muted-foreground">
-        Unable to load data.
-      </div>
-    );
-  }
-
-  // รับค่าจาก Backend (รองรับทั้งแบบมี .data ครอบ และแบบส่ง Array มาตรงๆ)
+  const { data: eventsResponse, isLoading, isError } = useEvents(filters);
   const events = eventsResponse?.data || eventsResponse || [];
-
-  // 🔴 3. เพิ่ม Empty State กรณีที่ API ตอบกลับสำเร็จแต่ไม่มีข้อมูล
-  if (!events || events.length === 0) {
-    return (
-      <div className="flex justify-center items-center py-20 min-h-[400px] text-muted-foreground">
-        No concerts available.
-      </div>
-    );
-  }
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
@@ -56,25 +38,43 @@ export function FeaturedConcerts() {
         </Button>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {events.map((event: any) => (
-          <ConcertCard
-            key={event.id}
-            concert={{
-              id: event.id,
-              title: event.name,
-              artist: event.artist,
-              date: new Date(event.show_time).toLocaleDateString('th-TH'),
-              time: new Date(event.show_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-              venue: event.venue,
-              image: event.image_url || "/placeholder.jpg",
-              category: event.category,
-              price: event.price,
-              remainingTickets: event.remainingTickets
-            }}
-          />
-        ))}
-      </div>
+      {/* Render เนื้อหาตาม State ของ Data */}
+      {isLoading ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-[300px] w-full rounded-xl" />
+          ))}
+        </div>
+      ) : isError ? (
+        <div className="flex justify-center items-center py-20 text-red-500">
+          Failed to load events.
+        </div>
+      ) : events.length === 0 ? (
+        <div className="text-center text-gray-500 py-12">
+          <h3 className="text-xl font-semibold mb-2">No events found.</h3>
+          <p>Try adjusting your search filters.</p>
+        </div>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {events.map((event: any) => (
+            <ConcertCard
+              key={event.id}
+              concert={{
+                id: event.id,
+                title: event.name,
+                artist: event.artist,
+                date: new Date(event.show_time).toLocaleDateString('th-TH'),
+                time: new Date(event.show_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+                venue: event.venue,
+                image: event.image_url || "/placeholder.jpg",
+                category: event.category,
+                price: event.price,
+                remainingTickets: event.remainingTickets
+              }}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

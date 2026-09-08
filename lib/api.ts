@@ -2,6 +2,13 @@
 import axios from "axios";
 import { supabase } from "@/lib/supabase"; // 🔴 1. Import Supabase Client จากไฟล์ศูนย์กลาง
 
+// 🔴 สร้าง Interface สำหรับ Search
+export interface EventFilters {
+  search?: string;
+  location?: string;
+  date?: string;
+}
+
 // 1. สร้าง Axios Instance
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL, // ระบุเป็น http://localhost:8080/api/v1 ใน .env
@@ -65,8 +72,14 @@ api.interceptors.response.use(
 // 4. Export API Functions (คืนค่าเฉพาะ response.data)
 // ==========================================
 
-export const getEvents = async () => {
-  const response = await api.get("/events");
+// 🔴 นำ Filters ส่งให้ Axios ทำเป็น Query Params
+export const getEvents = async (filters?: EventFilters) => {
+  const params: Record<string, string> = {};
+  if (filters?.search) params.search = filters.search;
+  if (filters?.location) params.location = filters.location;
+  if (filters?.date) params.date = filters.date;
+
+  const response = await api.get("/events", { params });
   return response.data;
 };
 

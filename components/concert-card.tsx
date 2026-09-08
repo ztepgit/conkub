@@ -71,7 +71,7 @@ export function ConcertCard({ concert }: ConcertCardProps) {
           </div>
           {/* 🔴 2. ครอบปุ่มด้วย Link เพื่อพาไปหน้ารายละเอียดคอนเสิร์ต */}
           <Link href={`/events/${concert.id}`}>
-            <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer">
               <Ticket className="h-4 w-4" />
               Book Now
             </Button>

@@ -1,15 +1,17 @@
 // hooks/use-api.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getEvents, getEventById, getSeats, bookSeat } from "@/lib/api";
+import { getEvents, getEventById, getSeats, bookSeat, EventFilters } from "@/lib/api"; // 🔴 เพิ่ม EventFilters
 
 // ==========================================
 // 🟢 PUBLIC API (ไม่ต้องใช้ Token)
 // ==========================================
-export function useEvents() {
+
+// 🔴 ผูก Filters เข้ากับ queryKey เพื่อให้ React Query ทราบเมื่อมีการค้นหาใหม่
+export function useEvents(filters?: EventFilters) {
   return useQuery({
-    queryKey: ["events"],
-    queryFn: () => getEvents(),
+    queryKey: ["events", filters],
+    queryFn: () => getEvents(filters),
   });
 }
 
