@@ -132,13 +132,23 @@ export function SeatMap({ eventId }: SeatMapProps) {
   const rows = Object.keys(groupedSeats).sort();
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8">
-      {/* ฝั่งซ้าย: ผังที่นั่ง */}
-      <div className="flex-1 space-y-10 border rounded-2xl p-6 lg:p-10 bg-card/50">
-        {/* หน้าเวที */}
-        <div className="relative w-full max-w-2xl mx-auto h-24 bg-gradient-to-b from-primary/20 to-transparent rounded-t-[100px] flex items-center justify-center border-t-4 border-primary shadow-[0_-10px_40px_rgba(var(--primary),0.2)]">
-          <span className="text-lg font-bold tracking-widest text-primary/80 uppercase">Stage</span>
-        </div>
+ <div className="flex flex-col lg:flex-row gap-8">
+        {/* ฝั่งซ้าย: ผังที่นั่ง */}
+        <div className="flex-1 space-y-10 border rounded-2xl p-6 lg:p-10 bg-card/50">
+
+          {/* 🔴 Stage แบบสีดำเงา (Glossy Black) ไม่มี Gradient */}
+          <div className="relative w-full max-w-3xl mx-auto h-24 md:h-32 rounded-[2rem] bg-black shadow-[inset_0_2px_8px_rgba(255,255,255,0.15),_0_10px_20px_rgba(0,0,0,0.2)] border border-white/10 mb-8 overflow-hidden">
+            
+            {/* ข้อความ STAGE */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-2xl md:text-3xl font-black tracking-[0.5em] text-white/90 ml-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                STAGE
+              </span>
+            </div>
+
+            {/* เส้น Glow บางๆ ด้านล่างเวที (Stage Edge Indicator) */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+          </div>
 
         {/* Legend (คำอธิบายสี) */}
         <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground pb-6 border-b">
@@ -158,7 +168,7 @@ export function SeatMap({ eventId }: SeatMapProps) {
 
         {/* ตารางที่นั่ง */}
         <div className="overflow-x-auto pb-4">
-          <div className="min-w-[600px] flex flex-col gap-4 items-center">
+          <div className="min-w-[600px] flex flex-col gap-4 items-center pt-2">
             {rows.map((row) => (
               <div key={row} className="flex items-center gap-4">
                 <div className="w-8 text-center font-bold text-muted-foreground">{row}</div>
