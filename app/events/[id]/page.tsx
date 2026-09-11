@@ -3,7 +3,7 @@
 
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Calendar, MapPin, Clock, Info, Loader2 } from "lucide-react"; // 🔴 เพิ่ม Loader2
+import { Calendar, MapPin, Clock, Info, Loader2, Ticket } from "lucide-react"; // 🔴 เพิ่ม Ticket เข้ามาใน import
 import { SeatMap } from "@/components/seat-map";
 
 import { PaymentStatus } from "@/components/payment-status";
@@ -109,6 +109,14 @@ export default function EventDetailPage({ params }: EventPageProps) {
                 <div className="flex items-center gap-2 bg-secondary/50 px-3 py-1.5 rounded-md backdrop-blur-sm">
                   <MapPin className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium">{eventData.venue}</span>
+                </div>
+
+                {/* 🔴 2. เพิ่มป้ายแสดงราคาเริ่มต้น (ดึงมาจาก eventData.price ที่ Backend ทำ MIN(price) ไว้แล้ว) */}
+                <div className="flex items-center gap-2 bg-primary/10 text-primary px-3 py-1.5 rounded-md backdrop-blur-sm">
+                  <Ticket className="w-4 h-4" />
+                  <span className="text-sm font-bold">
+                    เริ่มต้น ฿{eventData.price?.toLocaleString() || "0"}
+                  </span>
                 </div>
               </div>
             </div>
