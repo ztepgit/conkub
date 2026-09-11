@@ -141,14 +141,14 @@ export function SeatMap({ eventId }: SeatMapProps) {
 
   const rows = Object.keys(groupedSeats).sort();
 
-  // 🔴 หา ราคาของ VIP และ Regular สำหรับแสดงใน Legend
+  // หา ราคาของ VIP และ Regular สำหรับแสดงใน Legend
   const vipPrice = seats.find(s => s.seat_type === "VIP")?.price || 0;
   const regPrice = seats.find(s => s.seat_type === "REGULAR")?.price || 0;
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
       {/* ฝั่งซ้าย: ผังที่นั่ง */}
-      <div className="flex-1 space-y-10 border rounded-2xl p-6 lg:p-10 bg-card/50">
+      <div className="flex-1 space-y-10 border rounded-2xl p-6 lg:p-10 bg-card/50 overflow-hidden">
         
         {/* Stage ดำเงา */}
         <div className="relative w-full max-w-3xl mx-auto h-24 md:h-32 rounded-[2rem] bg-black shadow-[inset_0_2px_8px_rgba(255,255,255,0.15),_0_10px_20px_rgba(0,0,0,0.2)] border border-white/10 mb-8 overflow-hidden">
@@ -159,22 +159,24 @@ export function SeatMap({ eventId }: SeatMapProps) {
           </div>
         </div>
 
-        {/* 🔴 Legend ปรับปรุงใหม่ */}
+        {/* Legend ปรับปรุงใหม่ (เปลี่ยน VIP เป็น Blue Pastel) */}
         <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground pb-6 border-b">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md bg-amber-500/90 shadow-sm border border-amber-600/20" />
+            {/* 🔴 เปลี่ยนสี VIP ตรง Legend */}
+            <div className="w-5 h-5 rounded-md bg-blue-300 shadow-sm border border-blue-400/50" />
             <span>VIP {vipPrice > 0 && `— ฿${vipPrice.toLocaleString()}`}</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md bg-secondary border" />
+            <div className="w-5 h-5 rounded-md bg-secondary border border-border" />
             <span>Regular {regPrice > 0 && `— ฿${regPrice.toLocaleString()}`}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-md bg-primary ring-2 ring-primary ring-offset-2 ring-offset-background" />
             <span>กำลังเลือก</span>
           </div>
+        {/* 🔴 หลังแก้ (เปลี่ยนเป็นสีแดง) */}
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md bg-muted opacity-50" />
+            <div className="w-5 h-5 rounded-md bg-red-500/70 cursor-not-allowed" />
             <span>ไม่ว่าง / ขายแล้ว</span>
           </div>
         </div>
@@ -183,39 +185,47 @@ export function SeatMap({ eventId }: SeatMapProps) {
         <div className="overflow-x-auto pb-4">
           <div className="min-w-[600px] flex flex-col gap-4 items-center pt-2">
             {rows.map((row) => (
-              <div key={row} className="flex items-center gap-4">
-                <div className="w-8 text-center font-bold text-muted-foreground">{row}</div>
-                <div className="flex gap-2">
-                  {groupedSeats[row]
-                    .sort((a: Seat, b: Seat) => a.number - b.number)
-                    .map((seat: Seat) => {
-                      const isBooked = seat.status === "BOOKED";
-                      const isSelected = selectedSeat?.id === seat.id;
-                      const isVIP = seat.seat_type === "VIP"; // 🔴 เช็คประเภทจาก API
+              <div key={row} className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-4">
+                  <div className="w-8 text-center font-bold text-muted-foreground">{row}</div>
+                  <div className="flex gap-2">
+                    {groupedSeats[row]
+                      .sort((a: Seat, b: Seat) => a.number - b.number)
+                      .map((seat: Seat) => {
+                        const isBooked = seat.status === "BOOKED";
+                        const isSelected = selectedSeat?.id === seat.id;
+                        const isVIP = seat.seat_type === "VIP"; 
 
-                      return (
-                        <button
-                          key={seat.id}
-                          disabled={isBooked || bookSeatMutation.isPending || isCheckingSession}
-                          onClick={() => setSelectedSeat(seat)}
-                          className={cn(
-                            "w-10 h-10 rounded-t-lg rounded-b-sm flex items-center justify-center text-xs font-medium transition-all duration-200",
-                            isBooked
-                              ? "bg-muted text-muted-foreground/30 cursor-not-allowed"
-                              : isSelected
-                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110 -translate-y-1"
-                                : isVIP
-                                  ? "bg-amber-500/90 hover:bg-amber-500 text-white hover:shadow-md hover:shadow-amber-500/20 border-transparent"
-                                  : "bg-secondary hover:bg-primary/20 hover:text-primary border hover:border-primary/50"
-                          )}
-                          title={isBooked ? "จองแล้ว" : `[${seat.seat_type}] แถว ${seat.row} เลขที่ ${seat.number} - ฿${seat.price.toLocaleString()}`}
-                        >
-                          {seat.number}
-                        </button>
-                      );
-                    })}
+                        return (
+                          <button
+                            key={seat.id}
+                            disabled={isBooked || bookSeatMutation.isPending || isCheckingSession}
+                            onClick={() => setSelectedSeat(seat)}
+                            className={cn(
+                              "w-10 h-10 rounded-t-lg rounded-b-sm flex items-center justify-center text-xs font-medium transition-all duration-200",
+                              isBooked
+                                ? "bg-muted text-muted-foreground/30 cursor-not-allowed"
+                                : isSelected
+                                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110 -translate-y-1"
+                                  : isVIP
+                                    // 🔴 เปลี่ยนสีปุ่มที่นั่ง VIP เป็น Blue Pastel
+                                    ? "bg-blue-300 hover:bg-blue-400 text-blue-900 hover:shadow-md hover:shadow-blue-300/50 border-transparent"
+                                    : "bg-secondary hover:bg-primary/20 hover:text-primary border hover:border-primary/50"
+                            )}
+                            title={isBooked ? "จองแล้ว" : `[${seat.seat_type}] แถว ${seat.row} เลขที่ ${seat.number} - ฿${seat.price.toLocaleString()}`}
+                          >
+                            {seat.number}
+                          </button>
+                        );
+                      })}
+                  </div>
+                  <div className="w-8 text-center font-bold text-muted-foreground">{row}</div>
                 </div>
-                <div className="w-8 text-center font-bold text-muted-foreground">{row}</div>
+
+                {/* 🔴 เพิ่มเส้นแบ่งโซนเมื่อจบแถว C และ F */}
+                {(row === "C" || row === "F") && (
+                  <div className="w-full max-w-[650px] border-b-2 border-dashed border-border/60 mt-6 mb-2" />
+                )}
               </div>
             ))}
           </div>
@@ -243,11 +253,12 @@ export function SeatMap({ eventId }: SeatMapProps) {
                   </span>
                 </div>
                 
-                {/* 🔴 ส่วนแสดงประเภทที่นั่ง */}
+                {/* แสดงประเภทที่นั่ง */}
                 <div className="flex justify-between items-center py-3 border-b border-dashed">
                   <span className="text-muted-foreground">ประเภท</span>
                   <span className={cn("font-bold text-sm px-2 py-1 rounded-md", 
-                    selectedSeat.seat_type === "VIP" ? "bg-amber-100 text-amber-700" : "bg-secondary text-secondary-foreground"
+                    // 🔴 เปลี่ยนสีกรอบป้ายประเภท VIP ในสรุปการจอง เป็น Blue Pastel
+                    selectedSeat.seat_type === "VIP" ? "bg-blue-100 text-blue-700" : "bg-secondary text-secondary-foreground"
                   )}>
                     {selectedSeat.seat_type}
                   </span>
