@@ -8,8 +8,18 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2, Ticket, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase"; // 🔴 1. เปลี่ยนมาใช้ Supabase Client จากไฟล์กลาง
+import { supabase } from "@/lib/supabase";
 import { GoogleLoginCard } from "@/components/google-login-card";
+
+// 🔴 เพิ่ม Type รองรับ
+interface Seat {
+  id: number;
+  row: string;
+  number: number;
+  seat_type: string;
+  price: number;
+  status: string;
+}
 
 interface SeatMapProps {
   eventId: number;
@@ -18,14 +28,14 @@ interface SeatMapProps {
 export function SeatMap({ eventId }: SeatMapProps) {
   const { data, isLoading, isError } = useSeats(eventId);
   const bookSeatMutation = useBookSeat();
-  const [selectedSeat, setSelectedSeat] = useState<any | null>(null);
+  const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
 
   // State ควบคุม Dialog สำหรับ GoogleLoginCard
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(false);
 
   // ============================================================================
-  // 🔴 2. รับฟัง Event "auth:required" จาก Axios Interceptor เพื่อเปิด Dialog อัตโนมัติ
+  // รับฟัง Event "auth:required" จาก Axios Interceptor เพื่อเปิด Dialog อัตโนมัติ
   // ============================================================================
   useEffect(() => {
     const handler = () => {
@@ -39,7 +49,7 @@ export function SeatMap({ eventId }: SeatMapProps) {
   }, []);
 
   // ============================================================================
-  // 🔴 3. ตรวจสอบ Session ก่อนเรียก Protected API
+  // ตรวจสอบ Session ก่อนเรียก Protected API
   // ============================================================================
   const handleBookClick = async () => {
     if (!selectedSeat) {
@@ -59,7 +69,7 @@ export function SeatMap({ eventId }: SeatMapProps) {
         JSON.stringify({ eventId, seatId: selectedSeat.id })
       );
       setIsLoginDialogOpen(true);
-      return; // 🔴 return ทันที ห้ามเรียก mutate() / ห้ามยิง POST /bookings
+      return; // return ทันที ห้ามเรียก mutate() / ห้ามยิง POST /bookings
     }
 
     // หากเข้าสู่ระบบแล้ว จึงจะเรียก Protected API
@@ -92,7 +102,7 @@ export function SeatMap({ eventId }: SeatMapProps) {
     return () => authListener.subscription.unsubscribe();
   }, []);
 
-  // 🔴 4. Loading State
+  // Loading State
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -102,7 +112,7 @@ export function SeatMap({ eventId }: SeatMapProps) {
     );
   }
 
-  // 🔴 5. Error State
+  // Error State
   if (isError) {
     return (
       <div className="flex justify-center py-10 text-muted-foreground">
@@ -111,9 +121,9 @@ export function SeatMap({ eventId }: SeatMapProps) {
     );
   }
 
-  const seats = data?.data || data || [];
+  const seats: Seat[] = data?.data || data || [];
 
-  // 🔴 6. Empty State
+  // Empty State
   if (!seats || seats.length === 0) {
     return (
       <div className="flex justify-center py-10 text-muted-foreground">
@@ -122,8 +132,8 @@ export function SeatMap({ eventId }: SeatMapProps) {
     );
   }
 
-  // จัดกลุ่มที่นั่งตามแถว (Row) เช่น A, B, C
-  const groupedSeats = seats.reduce((acc: any, seat: any) => {
+  // จัดกลุ่มที่นั่งตามแถว (Row)
+  const groupedSeats = seats.reduce((acc: any, seat: Seat) => {
     if (!acc[seat.row]) acc[seat.row] = [];
     acc[seat.row].push(seat);
     return acc;
@@ -131,37 +141,40 @@ export function SeatMap({ eventId }: SeatMapProps) {
 
   const rows = Object.keys(groupedSeats).sort();
 
+  // 🔴 หา ราคาของ VIP และ Regular สำหรับแสดงใน Legend
+  const vipPrice = seats.find(s => s.seat_type === "VIP")?.price || 0;
+  const regPrice = seats.find(s => s.seat_type === "REGULAR")?.price || 0;
+
   return (
- <div className="flex flex-col lg:flex-row gap-8">
-        {/* ฝั่งซ้าย: ผังที่นั่ง */}
-        <div className="flex-1 space-y-10 border rounded-2xl p-6 lg:p-10 bg-card/50">
-
-          {/* 🔴 Stage แบบสีดำเงา (Glossy Black) ไม่มี Gradient */}
-          <div className="relative w-full max-w-3xl mx-auto h-24 md:h-32 rounded-[2rem] bg-black shadow-[inset_0_2px_8px_rgba(255,255,255,0.15),_0_10px_20px_rgba(0,0,0,0.2)] border border-white/10 mb-8 overflow-hidden">
-            
-            {/* ข้อความ STAGE */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl md:text-3xl font-black tracking-[0.5em] text-white/90 ml-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-                STAGE
-              </span>
-            </div>
-
-            {/* เส้น Glow บางๆ ด้านล่างเวที (Stage Edge Indicator) */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+    <div className="flex flex-col lg:flex-row gap-8">
+      {/* ฝั่งซ้าย: ผังที่นั่ง */}
+      <div className="flex-1 space-y-10 border rounded-2xl p-6 lg:p-10 bg-card/50">
+        
+        {/* Stage ดำเงา */}
+        <div className="relative w-full max-w-3xl mx-auto h-24 md:h-32 rounded-[2rem] bg-black shadow-[inset_0_2px_8px_rgba(255,255,255,0.15),_0_10px_20px_rgba(0,0,0,0.2)] border border-white/10 mb-8 overflow-hidden">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-2xl md:text-3xl font-black tracking-[0.5em] text-white/90 ml-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+              STAGE
+            </span>
           </div>
+        </div>
 
-        {/* Legend (คำอธิบายสี) */}
+        {/* 🔴 Legend ปรับปรุงใหม่ */}
         <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground pb-6 border-b">
           <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-md bg-amber-500/90 shadow-sm border border-amber-600/20" />
+            <span>VIP {vipPrice > 0 && `— ฿${vipPrice.toLocaleString()}`}</span>
+          </div>
+          <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-md bg-secondary border" />
-            <span>ว่าง</span>
+            <span>Regular {regPrice > 0 && `— ฿${regPrice.toLocaleString()}`}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-md bg-primary ring-2 ring-primary ring-offset-2 ring-offset-background" />
             <span>กำลังเลือก</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md bg-muted opacity-50 cursor-not-allowed" />
+            <div className="w-5 h-5 rounded-md bg-muted opacity-50" />
             <span>ไม่ว่าง / ขายแล้ว</span>
           </div>
         </div>
@@ -174,10 +187,11 @@ export function SeatMap({ eventId }: SeatMapProps) {
                 <div className="w-8 text-center font-bold text-muted-foreground">{row}</div>
                 <div className="flex gap-2">
                   {groupedSeats[row]
-                    .sort((a: any, b: any) => a.number - b.number)
-                    .map((seat: any) => {
+                    .sort((a: Seat, b: Seat) => a.number - b.number)
+                    .map((seat: Seat) => {
                       const isBooked = seat.status === "BOOKED";
                       const isSelected = selectedSeat?.id === seat.id;
+                      const isVIP = seat.seat_type === "VIP"; // 🔴 เช็คประเภทจาก API
 
                       return (
                         <button
@@ -190,9 +204,11 @@ export function SeatMap({ eventId }: SeatMapProps) {
                               ? "bg-muted text-muted-foreground/30 cursor-not-allowed"
                               : isSelected
                                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110 -translate-y-1"
-                                : "bg-secondary hover:bg-primary/20 hover:text-primary border hover:border-primary/50"
+                                : isVIP
+                                  ? "bg-amber-500/90 hover:bg-amber-500 text-white hover:shadow-md hover:shadow-amber-500/20 border-transparent"
+                                  : "bg-secondary hover:bg-primary/20 hover:text-primary border hover:border-primary/50"
                           )}
-                          title={isBooked ? "จองแล้ว" : `แถว ${seat.row} เลขที่ ${seat.number} - ฿${seat.price}`}
+                          title={isBooked ? "จองแล้ว" : `[${seat.seat_type}] แถว ${seat.row} เลขที่ ${seat.number} - ฿${seat.price.toLocaleString()}`}
                         >
                           {seat.number}
                         </button>
@@ -226,10 +242,22 @@ export function SeatMap({ eventId }: SeatMapProps) {
                     {selectedSeat.row}-{selectedSeat.number}
                   </span>
                 </div>
+                
+                {/* 🔴 ส่วนแสดงประเภทที่นั่ง */}
+                <div className="flex justify-between items-center py-3 border-b border-dashed">
+                  <span className="text-muted-foreground">ประเภท</span>
+                  <span className={cn("font-bold text-sm px-2 py-1 rounded-md", 
+                    selectedSeat.seat_type === "VIP" ? "bg-amber-100 text-amber-700" : "bg-secondary text-secondary-foreground"
+                  )}>
+                    {selectedSeat.seat_type}
+                  </span>
+                </div>
+
                 <div className="flex justify-between items-center py-3 border-b border-dashed">
                   <span className="text-muted-foreground">ราคา</span>
                   <span className="font-bold text-lg">฿{selectedSeat.price.toLocaleString()}</span>
                 </div>
+
                 <div className="bg-secondary/50 p-3 rounded-lg flex items-start gap-3 mt-4">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                   <p className="text-xs text-muted-foreground">
@@ -264,11 +292,8 @@ export function SeatMap({ eventId }: SeatMapProps) {
         </Card>
       </div>
 
-      {/* GoogleLoginCard Modal (มี Dialog ในตัวแล้ว เรียกใช้โดยตรง) */}
-      <GoogleLoginCard
-        open={isLoginDialogOpen}
-        onOpenChange={setIsLoginDialogOpen}
-      />
+      {/* Google Login Modal */}
+      <GoogleLoginCard open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen} />
     </div>
   );
 }
