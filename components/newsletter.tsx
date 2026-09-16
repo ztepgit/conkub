@@ -23,7 +23,7 @@ export function Newsletter() {
             exclusive presales, and special offers.
           </p>
 
-          <form className="mx-auto flex max-w-md flex-col gap-3 sm:flex-row">
+          <form className="mx-auto flex max-w-md flex-col gap-3 sm:flex-row" onSubmit={(e) => e.preventDefault()}>
             <div className="relative flex-1">
               <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -35,7 +35,8 @@ export function Newsletter() {
             <Button
               type="submit"
               size="lg"
-              className="h-12 bg-foreground px-8 font-semibold text-background hover:bg-foreground/90"
+              className="h-12 bg-foreground px-8 font-semibold text-background hover:bg-foreground/90 cursor-pointer"
+
             >
               Subscribe
             </Button>

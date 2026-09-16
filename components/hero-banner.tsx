@@ -1,5 +1,7 @@
+//components/hero-banner.tsx
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import Link from "next/link"
 
 export function HeroBanner() {
   return (
@@ -28,18 +30,24 @@ export function HeroBanner() {
         </p>
         <div className="flex flex-col gap-4 sm:flex-row">
           <Button
+            asChild // เพิ่ม asChild เพื่อให้ปุ่มกลายเป็น <a> tag ด้านใน
             size="lg"
             className="gap-2 bg-white px-8 py-6 text-base font-semibold text-black hover:bg-white/90"
           >
-            Browse Concerts
-            <ArrowRight className="h-4 w-4" />
+            <Link href="#concerts">
+              Browse Concerts
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </Button>
           <Button
+            asChild
             size="lg"
             variant="outline"
             className="border-white/30 bg-transparent px-8 py-6 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/10"
           >
-            View Schedule
+            <Link href="/view-schedule">
+              View Schedule
+            </Link>
           </Button>
         </div>
 

@@ -20,8 +20,8 @@ import { GoogleLoginCard } from "@/components/google-login-card";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/concerts", label: "Concerts" },
-  { href: "/categories", label: "Categories" },
+  { href: "/#concerts", label: "Concerts" },
+  { href: "/#categories", label: "Categories" },
   { href: "/about", label: "About" },
 ];
 
