@@ -1,23 +1,26 @@
+"use client";
+
 import Link from "next/link";
 import { Music2, Facebook, Twitter, Instagram, Youtube } from "lucide-react";
 
+// footerLinks ใหม่
 const footerLinks = {
   Company: [
-    { label: "About Us", href: "/about" },
-    { label: "Careers", href: "/careers" },
-    { label: "Press", href: "/press" },
-    { label: "Blog", href: "/blog" },
+    { label: "About Us", href: "/about" }, // 🔴 ลิงก์นี้จะกดได้ปกติ
+    { label: "Careers", href: "#" },
+    { label: "Press", href: "#" },
+    { label: "Blog", href: "#" },
   ],
   Support: [
-    { label: "Help Center", href: "/help" },
-    { label: "Contact Us", href: "/contact" },
-    { label: "FAQs", href: "/faqs" },
-    { label: "Refund Policy", href: "/refunds" },
+    { label: "Help Center", href: "#" },
+    { label: "Contact Us", href: "#" },
+    { label: "FAQs", href: "#" },
+    { label: "Refund Policy", href: "#" },
   ],
   Legal: [
-    { label: "Terms of Service", href: "/terms" },
-    { label: "Privacy Policy", href: "/privacy" },
-    { label: "Cookie Policy", href: "/cookies" },
+    { label: "Terms of Service", href: "#" },
+    { label: "Privacy Policy", href: "#" },
+    { label: "Cookie Policy", href: "#" },
   ],
 };
 
@@ -35,7 +38,11 @@ export function Footer() {
         <div className="grid gap-8 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2">
+            <Link
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="flex items-center gap-2 cursor-pointer"
+            >
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <Music2 className="h-5 w-5 text-primary-foreground" />
               </div>
@@ -51,7 +58,8 @@ export function Footer() {
                 <a
                   key={social.label}
                   href={social.href}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-accent hover:text-white"
+                  onClick={(e) => e.preventDefault()}
+                  className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-accent hover:text-white"
                   aria-label={social.label}
                 >
                   <social.icon className="h-5 w-5" />
@@ -71,7 +79,13 @@ export function Footer() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      // 🔴 แก้ไขตรงนี้: ให้บล็อกเฉพาะลิงก์ที่ไม่ใช่ /about
+                      onClick={(e) => {
+                        if (link.href !== "/about") {
+                          e.preventDefault();
+                        }
+                      }}
+                      className="text-sm cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {link.label}
                     </Link>
@@ -89,20 +103,23 @@ export function Footer() {
           </p>
           <div className="flex gap-6">
             <Link
-              href="/terms"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="text-sm cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
             >
               Terms
             </Link>
             <Link
-              href="/privacy"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="text-sm cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
             >
               Privacy
             </Link>
             <Link
-              href="/cookies"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="text-sm cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
             >
               Cookies
             </Link>

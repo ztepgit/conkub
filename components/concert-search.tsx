@@ -28,7 +28,7 @@ export function ConcertSearch() {
   };
 
   return (
-    <section className="relative z-10 mx-auto -mt-12 max-w-5xl px-4 sm:px-6 lg:px-8">
+    <section id="search" className="relative z-10 mx-auto -mt-12 max-w-5xl px-4 sm:px-6 lg:px-8">
       <div className="rounded-2xl border border-border/50 bg-card p-4 shadow-xl shadow-black/5 sm:p-6">
         <div className="grid gap-4 md:grid-cols-4">
           {/* Search Input */}

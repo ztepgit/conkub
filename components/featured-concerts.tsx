@@ -22,7 +22,7 @@ export function FeaturedConcerts() {
   const events = eventsResponse?.data || eventsResponse || [];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+    <section id="concerts"className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
       <div className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h2 className="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">
@@ -32,10 +32,10 @@ export function FeaturedConcerts() {
             {"Don't miss out on these trending events"}
           </p>
         </div>
-        <Button variant="outline" className="gap-2">
+        {/* <Button variant="outline" className="gap-2">
           View All Events
           <ArrowRight className="h-4 w-4" />
-        </Button>
+        </Button> */}
       </div>
 
       {/* Render เนื้อหาตาม State ของ Data */}

@@ -39,7 +39,7 @@ export function WhyChooseUs() {
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="group rounded-xl border border-border bg-card p-8 text-center transition-all hover:border-accent/50 hover:shadow-lg"
+              className="group rounded-xl border border-border bg-card p-8 text-center transition-all hover:border-accent/50 hover:shadow-lg cursor-pointer"
             >
               <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-white">
                 <feature.icon className="h-6 w-6" />
