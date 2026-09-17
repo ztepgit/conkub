@@ -209,6 +209,7 @@ export function Navbar() {
           </div>
         </DialogContent>
       </Dialog>
+      <MyTicketsModal open={showTicketsModal} onOpenChange={setShowTicketsModal} />
     </>
   );
 }
