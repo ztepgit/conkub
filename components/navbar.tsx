@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { GoogleLoginCard } from "@/components/google-login-card";
+import { MyTicketsModal } from "@/components/my-tickets-modal";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -31,6 +32,7 @@ export function Navbar() {
   const { user, loading } = useAuth(); // 🔴 ดึง Auth State จาก Supabase โดยตรง
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLoginCard, setShowLoginCard] = useState(false);
+  const [showTicketsModal, setShowTicketsModal] = useState(false);
 
   // 🔴 ฟังก์ชัน Sign Out
   const handleSignOut = async () => {
@@ -84,7 +86,7 @@ export function Navbar() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-48" align="end" forceMount>
-                  <DropdownMenuItem className="gap-2 cursor-pointer">
+                  <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setShowTicketsModal(true)}>
                     <Ticket className="h-4 w-4" />
                     <span>My Tickets</span>
                   </DropdownMenuItem>
