@@ -22,7 +22,7 @@ export function MyTicketsModal({ open, onOpenChange }: MyTicketsModalProps) {
       const { data: session } = await supabase.auth.getSession();
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
       
-      const res = await fetch(`${apiUrl}/api/v1/bookings/me`, {
+      const res = await fetch(`${apiUrl}/bookings/me`, {
         headers: {
           Authorization: `Bearer ${session.session?.access_token}`,
         },
@@ -51,11 +51,11 @@ export function MyTicketsModal({ open, onOpenChange }: MyTicketsModalProps) {
             </div>
           ) : isError ? (
             <div className="text-center py-8 text-destructive">
-              <p>เกิดข้อผิดพลาดในการโหลดข้อมูลตั๋ว</p>
+              <p>ติดต่อเซิร์ฟเวอร์ไม่ได้</p>
             </div>
           ) : tickets?.data?.length === 0 || !tickets?.data ? (
             <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-lg border-2 border-dashed">
-              <p>คุณยังไม่มีตั๋วคอนเสิร์ตในขณะนี้</p>
+              <p>ไม่พบตั๋วของคุณในระบบ</p>
             </div>
           ) : (
             tickets.data.map((ticket: any) => (
