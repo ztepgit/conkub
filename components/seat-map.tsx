@@ -204,7 +204,7 @@ export function SeatMap({ eventId }: SeatMapProps) {
                             className={cn(
                               "w-10 h-10 rounded-t-lg rounded-b-sm flex items-center justify-center text-xs font-medium transition-all duration-200",
                               isBooked
-                                ? "bg-muted text-muted-foreground/30 cursor-not-allowed"
+                                ? "bg-red-500/70 text-white shadow-[inset_0_1px_4px_rgba(0,0,0,0.4)] cursor-not-allowed border-red-600"
                                 : isSelected
                                   ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110 -translate-y-1"
                                   : isVIP

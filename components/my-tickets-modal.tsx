@@ -21,7 +21,7 @@ export function MyTicketsModal({ open, onOpenChange }: MyTicketsModalProps) {
     queryFn: async () => {
       const { data: session } = await supabase.auth.getSession();
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      
+
       const res = await fetch(`${apiUrl}/bookings/me`, {
         headers: {
           Authorization: `Bearer ${session.session?.access_token}`,
@@ -35,7 +35,7 @@ export function MyTicketsModal({ open, onOpenChange }: MyTicketsModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <Ticket className="w-5 h-5 text-primary" />
@@ -43,7 +43,8 @@ export function MyTicketsModal({ open, onOpenChange }: MyTicketsModalProps) {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="py-4 flex flex-col gap-4">
+        {/* 🔴 ส่วนที่ปรับปรุง: เพิ่ม max-h และ overflow-y-auto เพื่อให้ Scroll ได้เมื่อตั๋วมีหลายใบ */}
+        <div className="py-2 flex flex-col gap-4 overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
           {isLoading ? (
             <div className="flex flex-col items-center py-8 text-muted-foreground">
               <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
@@ -59,20 +60,26 @@ export function MyTicketsModal({ open, onOpenChange }: MyTicketsModalProps) {
             </div>
           ) : (
             tickets.data.map((ticket: any) => (
-              <div key={ticket.id} className="p-4 border rounded-xl bg-card shadow-sm flex flex-col gap-2">
-                <h3 className="font-bold text-lg leading-tight">{ticket.event_name}</h3>
-                <div className="flex flex-col gap-1 text-sm text-muted-foreground mt-1">
+              /* 🔴 ปรับสีพื้นหลังการ์ดเป็นสีน้ำเงิน Google และปรับสีตัวหนังสือเป็นสีขาวให้กลมกลืน */
+              <div key={ticket.id} className="p-4 border-0 rounded-xl bg-[#4285F4] text-black shadow-md flex flex-col gap-2">
+                <h3 className="font-bold text-lg leading-tight drop-shadow-sm">{ticket.event_name}</h3>
+
+                <div className="flex flex-col gap-1.5 text-sm text-black mt-1">
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
+                    <Calendar className="w-4 h-4 text-black" />
                     <span>{new Date(ticket.show_time).toLocaleString("th-TH")}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
+                    <MapPin className="w-4 h-4 text-black" />
                     <span>{ticket.venue}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-primary font-medium mt-1">
-                    <Ticket className="w-4 h-4" />
-                    <span>โซน/ที่นั่ง: {ticket.seat_type}</span>
+
+                  {/* กรอบแสดงโซนและที่นั่งแบบเด่นขึ้นมา เพื่อความสวยงาม */}
+                  <div className="flex items-center gap-2 font-medium mt-2 bg-blue-700/30 p-2.5 rounded-lg border border-blue-400/30">
+                    <Ticket className="w-4 h-4 shrink-0 text-black" />
+                    <span className="text-black">
+                      โซน: {ticket.seat_type} | แถว: {ticket.row} เลขที่: {ticket.number}
+                    </span>
                   </div>
                 </div>
               </div>
