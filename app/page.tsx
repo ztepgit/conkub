@@ -1,4 +1,7 @@
 //app/page.tsx
+
+export const dynamic = 'force-dynamic'; // บังคับให้ดึงข้อมูลใหม่ทุกครั้ง (ไม่จำลองหน้าตอน Build)
+
 import { Navbar } from "@/components/navbar";
 import { HeroBanner } from "@/components/hero-banner";
 import { ConcertSearch } from "@/components/concert-search";
